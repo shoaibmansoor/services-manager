@@ -1,0 +1,28 @@
+# Use the official Python image as the base image
+FROM python:3.8-slim
+
+# Install Node.js, Git
+RUN apt-get update && apt-get install -y curl git && \
+    curl -sL https://deb.nodesource.com/setup_14.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set the working directory
+WORKDIR /app
+
+# Clone and set up the Flask app
+RUN git clone https://github.com/shoaibmansoor/trainers-service.git /app/flask_app
+WORKDIR /app/flask_app
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Clone and set up the Express app
+RUN git clone https://github.com/shoaibmansoor/express-messge-service.git /app/express_app
+WORKDIR /app/express_app
+RUN npm install
+
+# Expose the ports for both apps
+EXPOSE 5000 3000
+
+# Run both apps in the background
+CMD ["sh", "-c", "python /app/flask_app/app.py & node /app/express_app/app.js"]
