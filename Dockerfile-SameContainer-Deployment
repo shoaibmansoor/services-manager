@@ -5,6 +5,7 @@ FROM python:3.8-slim
 RUN apt-get update && apt-get install -y curl git && \
     curl -sL https://deb.nodesource.com/setup_14.x | bash - && \
     apt-get install -y nodejs && \
+    apt-get install -y build-essential gcc libpq-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -12,7 +13,7 @@ RUN apt-get update && apt-get install -y curl git && \
 WORKDIR /app
 
 # Clone and set up the Flask app
-RUN git clone https://github.com/shoaibmansoor/trainers-service.git /app/flask_app
+RUN git clone https://github.com/shoaibmansoor/flask-trainers-service.git /app/flask_app
 WORKDIR /app/flask_app
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -21,8 +22,18 @@ RUN git clone https://github.com/shoaibmansoor/express-messge-service.git /app/e
 WORKDIR /app/express_app
 RUN npm install
 
-# Expose the ports for both apps
-EXPOSE 5000 3000
+# Clone and set up the Djnago app
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+RUN git clone https://github.com/shoaibmansoor/django-users-service.git /app/django_app
+WORKDIR /app/django_app/graphql_django_project
+RUN pip install --no-cache-dir -r requirements.txt
+RUN python manage.py makemigrations
+RUN python manage.py migrate
 
-# Run both apps in the background
-CMD ["sh", "-c", "python /app/flask_app/app.py & node /app/express_app/app.js"]
+
+# Expose the ports for both apps
+EXPOSE 5000 3000 8000
+
+# Run all apps in the background
+CMD ["sh", "-c", "python /app/flask_app/app.py & node /app/express_app/app.js & python -m gunicorn -b 0.0.0.0:8000 --chdir=/app/django_app/graphql_django_project graphql_django_project.wsgi:application" ]
