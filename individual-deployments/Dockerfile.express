@@ -1,0 +1,22 @@
+# Dockerfile-express
+# Use the official Node.js image as the base image
+FROM node:14
+
+# Set the working directory
+WORKDIR /app
+
+# Clone and set up the Express app
+RUN apt-get update && apt-get install -y git && \
+    git clone https://github.com/shoaibmansoor/express-messge-service.git /app/express_app && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app/express_app
+RUN npm install
+
+# Expose the port for the Express app
+ENV PORT 3001
+EXPOSE 3001
+
+# Start the Express app
+CMD ["node", "app.js"]
